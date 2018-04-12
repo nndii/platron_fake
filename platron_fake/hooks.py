@@ -1,10 +1,8 @@
-from urllib.parse import urljoin
-
 import requests
 from aiohttp import web
 
 from platron_fake.resources import Transaction
-from platron_fake.utils import xml_parse, sign_check, xml_build, sign
+from platron_fake.utils import xml_parse, sign_check, xml_build, sign, change_prefix
 
 
 async def process_init(request: web.Request):
@@ -28,7 +26,8 @@ async def process_init(request: web.Request):
 
 
 async def process_check(app: web.Application, transaction: Transaction):
-    url = urljoin(app['tc_prefix'], app['check_url'])
+    url = change_prefix(app, transaction.pg_check_url)
+
     request_data = transaction.jsonify({
         'pg_payment_id', 'pg_order_id', 'pg_amount',
         'pg_currency', 'pg_payment_system',
@@ -45,7 +44,8 @@ async def process_check(app: web.Application, transaction: Transaction):
 
 
 async def process_result(app: web.Application, transaction: Transaction):
-    url = urljoin(app['tc_refix'], transaction.pg_result_url)
+    url = change_prefix(app, transaction.pg_result_url)
+
     request_data = transaction.jsonify()
     request_data['pg_net_amount'] = transaction.pg_amount
     request_data['pg_result'] = 1

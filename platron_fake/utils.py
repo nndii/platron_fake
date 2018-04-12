@@ -1,6 +1,9 @@
 from hashlib import md5
+from urllib.parse import urlunparse, urlparse
 from uuid import uuid4
 from xml.etree import ElementTree
+
+from aiohttp import web
 
 
 def xml_parse(data):
@@ -63,3 +66,9 @@ def _sign_get_script(url):
         return path_parts[-1] or path_parts[-2]
     else:
         return url
+
+
+def change_prefix(app: web.Application, url: str) -> str:
+    source_url = list(urlparse(url))
+    source_url[1] = urlparse(app['tc_prefix'])[1]
+    return urlunparse(source_url)
