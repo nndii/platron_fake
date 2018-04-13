@@ -4,9 +4,14 @@ import uuid
 
 class Transaction(typing.NamedTuple):
     pg_order_id: int
-    pg_merchant: str
+    pg_merchant_id: str
+    pg_request_method: str
+    pg_success_url: str
+    pg_failure_url: str
+    pg_success_url_method: str
+    pg_failure_url_method: str
+    pg_testing_mode: str
     pg_amount: str
-    pg_currency: str
     pg_check_url: str
     pg_result_url: str
     pg_encoding: str
@@ -24,9 +29,10 @@ class Transaction(typing.NamedTuple):
     tc_org: str
     tc_vendor: str
     pg_lifetime: str
+    pg_currency: str = 'RUB'
     pg_redirect_url: str = 'http://example.com'
     pg_redirect_url_type: str = 'payment system'
-    pg_payment_id: str = uuid.uuid4()
+    pg_payment_id: str = str(uuid.uuid4())
 
     def jsonify(self, required=None):
         if required is None:
