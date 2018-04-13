@@ -27,10 +27,14 @@ def xml_build(root_tag, data):
     return b'<?xml version="1.0" encoding="utf-8"?>' + ElementTree.tostring(root)
 
 
-def sign(secret, url, data):
-    data['pg_salt'] = str(uuid4())
-    data['pg_sig'] = _sign_create(secret, url, data)
-    return data
+async def sign(secret, url, data):
+    try:
+        data['pg_salt'] = str(uuid4())
+        data['pg_sig'] = _sign_create(secret, url, data)
+    except Exception as e:
+        return e
+    else:
+        return data
 
 
 def sign_check(secret, url, data):
@@ -44,7 +48,7 @@ def _sign_get_values(data):
         if isinstance(value, dict):
             values.extend(_sign_get_values(value))
         else:
-            values.append(value)
+            values.append(str(value))
 
     return values
 
