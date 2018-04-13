@@ -1,6 +1,5 @@
 import requests
 from aiohttp import web
-
 from platron_fake.resources import Transaction
 from platron_fake.utils import xml_parse, sign_check, xml_build, sign, change_prefix
 
@@ -22,7 +21,7 @@ async def process_init(request: web.Request):
     response_data = transaction.jsonify({'pg_payment_id', 'pg_redirect_url', 'pg_redirect_url_type'})
     response_data['pg_status'] = 'ok'
 
-    response_data = sign(request.app['secret'], request.path, response_data)
+    response_data = await sign(request.app['secret'], request.path, response_data)
     response = xml_build('response', response_data)
     request.app['check'].put(transaction)
     request.app['log'].debug(f"CHECK QUEUE -> {request.app['check']}")
@@ -39,24 +38,28 @@ async def process_check(app: web.Application, transaction: Transaction):
         'tc_order', 'tc_payment', 'tc_tickets', 'tc_event',
         'tc_org', 'tc_vendor'
     })
-    request_data = sign(app['secret'], url, request_data)
+    request_data = await sign(app['secret'], url, request_data)
     app['log'].debug(f'CHECK -> {request_data}')
     response = requests.get(url, params=request_data).content.decode()
     app['log'].debug(f'CHECK <- {response}')
-    params = xml_parse(response)
+    result = xml_parse(response)
 
-    # if params['pg_status'] == 'ok':
-    #     await process_result(app, transaction)
-    return params
+    if result['pg_status'] == 'ok':
+        app['result'].put(transaction)
+
+    return result
 
 
 async def process_result(app: web.Application, transaction: Transaction):
     url = change_prefix(app, transaction.pg_result_url)
+    app['log'].debug(f'RESULT URL : {url}')
 
     request_data = transaction.jsonify()
+    app['log'].debug(f'RESULT req DATA : {request_data}')
     request_data['pg_net_amount'] = transaction.pg_amount
     request_data['pg_result'] = 1
-    request_data = sign(app['secret'], url, request_data)
+    request_data = await sign(app['secret'], url, request_data)
+    app['log'].debug(f'RESULT signed req DATA : {request_data}')
     app['log'].debug(f'RESULT -> {request_data}')
     response = requests.get(url, params=request_data).content.decode()
     app['log'].debug(f'RESULT <- {response}')
