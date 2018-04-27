@@ -33,6 +33,7 @@ class Transaction(typing.NamedTuple):
     pg_redirect_url: str = 'http://example.com'
     pg_redirect_url_type: str = 'payment system'
     pg_payment_id: str = str(uuid.uuid4())
+    pg_card_brand: str = 'Visa'
 
     def jsonify(self, required=None):
         if required is None:
